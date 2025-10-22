@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saphyran - Your Ultimate Discord Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #5865F2;
+            --secondary-color: #B9BBBE;
+            --background-color: #1e1f22;
+            --text-color: #FFFFFF;
+            --card-background: #2b2d31;
+            --header-background: rgba(44, 47, 51, 0.8);
+            --success-color: #43b581;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: var(--header-background);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        header .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin-left: 25px;
+            transition: color 0.3s;
+            font-weight: 600;
+        }
+
+        header .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .hamburger-menu {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 120px 0;
+        }
+
+        .hero h1 {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        .hero h1 .highlight {
+            color: var(--primary-color);
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            color: var(--secondary-color);
+        }
+
+        .cta-button {
+            background: var(--primary-color);
+            color: var(--text-color);
+            padding: 15px 35px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, background 0.3s;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            background: #4752C4;
+            transform: scale(1.05);
+        }
+        
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .section-header h2 {
+            font-size: 2.8em;
+            font-weight: 700;
+        }
+        
+        .section-header p {
+            color: var(--secondary-color);
+            max-width: 500px;
+            margin: 10px auto 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .feature-card {
+            background-color: var(--card-background);
+            padding: 35px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .feature-card i {
+            font-size: 3em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.6em;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: var(--secondary-color);
+        }
+        
+        #commands .command-category {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #commands h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        #commands h3 i {
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .command-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .command-list p {
+            background-color: var(--background-color);
+            padding: 12px;
+            border-radius: 5px;
+            margin: 0;
+            font-size: 0.95em;
+        }
+        
+        .command-list code {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .developer-section {
+            background-color: var(--card-background);
+            padding: 50px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .developer-section img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .developer-section h3 {
+            font-size: 2em;
+        }
+        
+        .developer-section .social-links a {
+            color: var(--secondary-color);
+            font-size: 1.5em;
+            margin: 0 10px;
+            transition: color 0.3s;
+        }
+        
+        .developer-section .social-links a:hover {
+            color: var(--primary-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 50px;
+            background: var(--card-background);
+        }
+        
+        footer .footer-links a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s;
+        }
+        
+        footer .footer-links a:hover {
+            color: var(--text-color);
+        }
+        
+        footer .copyright {
+            margin-top: 20px;
+            color: var(--secondary-color);
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8em;
+            }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 70px; /* Adjust based on header height */
+                left: 0;
+                width: 100%;
+                background: var(--header-background);
+                backdrop-filter: blur(10px);
+            }
+            .nav-links.active {
+                display: flex;
+            }
+            .nav-links a {
+                margin: 15px 0;
+                text-align: center;
+            }
+            .hamburger-menu {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">Saphyran</div>
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#commands">Commands</a>
+                <a href="#developer">Developer</a>
+                <a href="https://discord.gg/sanctyr" target="_blank">Support</a>
+            </nav>
+            <button class="hamburger-menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>The <span class="highlight">All-in-One</span> Discord Music Bot</h1>
+                <p>Elevate your server with high-quality music, powerful AI, an engaging leveling system, and much more. Saphyran is designed to be the only bot you'll ever need.</p>
+                <a href="https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissions=8" class="cta-button">Add to Discord</a>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Why Choose Saphyran?</h2>
+                    <p>Saphyran is packed with features to make your Discord server more fun and engaging.</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-music"></i>
+                        <h3>High-Quality Music</h3>
+                        <p>Play music from YouTube, Spotify, and more. Enjoy a seamless, lag-free listening experience with extensive controls.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-robot"></i>
+                        <h3>Powerful AI</h3>
+                        <p>Engage in intelligent conversations, generate text, and use AI-powered commands like TTS to enhance your server.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Advanced Leveling</h3>
+                        <p>Reward activity with a customizable leveling system, complete with leaderboards and personalized level-up cards.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-cogs"></i>
+                        <h3>Effortless Setup</h3>
+                        <p>Get started in minutes with simple setup commands for all major features, from AI to the music system.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="commands" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Comprehensive Commands</h2>
+                </div>
+                <div class="command-category">
+                    <h3><i class="fas fa-music"></i> Music Commands</h3>
+                    <div class="command-list">
+                        <p><code>/play [song]</code> - Plays a song.</p>
+                        <p><code>/skip</code> - Skips the current song.</p>
+                        <p><code>/queue</code> - Shows the song queue.</p>
+                        <p><code>/pause</code> - Pauses the music.</p>
+                        <p><code>/resume</code> - Resumes the music.</p>
+                        <p><code>/volume [level]</code> - Sets the volume.</p>
+                        <p><code>/loop</code> - Loops the current track or queue.</p>
+                        <p><code>/nowplaying</code> - Shows the currently playing song.</p>
+                        <p><code>/shuffle</code> - Shuffles the queue.</p>
+                    </div>
+                </div>
+                <div class="command-category">
+                    <h3><i class="fas fa-robot"></i> AI & TTS Commands</h3>
+                    <div class="command-list">
+                        <p><code>/setup-ai</code> - Sets up the AI features.</p>
+                        <p><code>/toggle-tts</code> - Toggles Text-to-Speech.</p>
+                        <p><code>/select-tts-voice</code> - Selects a TTS voice.</p>
+                        <p><code>/setup-ai-key</code> - Set your OpenAI API key.</p>
+                    </div>
+                </div>
+                <div class="command-category">
+                    <h3><i class="fas fa-chart-line"></i> Leveling Commands</h3>
+                    <div class="command-list">
+                        <p><code>/level</code> - Shows your current level.</p>
+                        <p><code>/leaderboard</code> - Shows the server leaderboard.</p>
+                        <p><code>/customize-level-card</code> - Customizes your level card.</p>
+                        <p><code>/setup-leveling</code> - Enables the leveling system.</p>
+                    </div>
+                </div>
+                 <div class="command-category">
+                    <h3><i class="fas fa-wrench"></i> Utility Commands</h3>
+                    <div class="command-list">
+                        <p><code>/help</code> - Displays all available commands.</p>
+                        <p><code>/ping</code> - Checks the bot's latency.</p>
+                        <p><code>/support</code> - Get links for support.</p>
+                        <p><code>/clear</code> - Bulk delete messages.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="developer" class="section">
+            <div class="container">
+                <div class="developer-section">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=DLS" alt="Developer Avatar">
+                    <h3>Meet the Developer</h3>
+                    <p>Saphyran is passionately developed by <strong>DLS</strong>, a developer dedicated to creating high-quality Discord experiences.</p>
+                    <div class="social-links">
+                        <a href="https://ko-fi.com/sanctyr" target="_blank" title="Ko-fi"><i class="fas fa-coffee"></i></a>
+                        <a href="https://discord.gg/sanctyr" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://sanctyr.space" target="_blank">Website</a>
+                <a href="https://discord.gg/sanctyr" target="_blank">Support Server</a>
+                <a href="https://ko-fi.com/sanctyr" target="_blank">Donate</a>
+            </div>
+            <p class="copyright">&copy; 2024 Saphyran Bot. Developed by DLS.</p>
+            <p class="copyright">DLS.</p>
+        </div>
+    </footer>
+
+    <script>
+        const hamburger = document.querySelector('.hamburger-menu');
+        const navLinks = document.querySelector('.nav-links');
+
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
+
+</body>
+</html>

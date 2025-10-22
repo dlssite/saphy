@@ -1,0 +1,8 @@
+.env
+node_modules
+node modules
+dist
+TODO.md
+.DS_Store
+.vscode
+.idea
