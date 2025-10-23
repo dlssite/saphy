@@ -3,7 +3,7 @@ const { calculateXP, calculateLevel } = require('./voiceLeveling');
 
 const updateInterval = 60 * 1000; // Update every 60 seconds
 
-async function startVoiceActivityUpdates(userJoinTimestamps) {
+async function startVoiceActivityUpdates(userJoinTimestamps, guildId) {
     setInterval(async () => {
         for (const [userId, lastUpdateTime] of userJoinTimestamps.entries()) {
             try {
@@ -12,7 +12,7 @@ async function startVoiceActivityUpdates(userJoinTimestamps) {
 
                 // Only award XP if a significant duration has passed since the last update
                 if (durationInSeconds >= 5) { // Update XP at least every 5 seconds
-                    const xpGained = calculateXP(durationInSeconds);
+                    const xpGained = calculateXP(durationInSeconds, guildId);
 
                     let user = await User.findOne({ discordId: userId });
 
@@ -25,7 +25,7 @@ async function startVoiceActivityUpdates(userJoinTimestamps) {
 
                     const oldLevel = user.level;
                     user.xp += xpGained;
-                    user.level = calculateLevel(user.xp);
+                    user.level = calculateLevel(user.xp, guildId);
 
                     await user.save();
 

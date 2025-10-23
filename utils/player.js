@@ -162,17 +162,22 @@ class PlayerHandler {
         this.client.riffy.on('queueEnd', async (player) => {
             try {
                 console.log(`🎵 Queue ended in ${player.guildId}`);
-        
+
                 await this.centralEmbed.updateCentralEmbed(player.guildId, null);
-        
+
                 const serverConfig = await require('../models/Server').findById(player.guildId);
-        
-                if (serverConfig?.settings?.autoplay) {
-                    player.isAutoplay = true;
-                }
-        
-                if (player.isAutoplay) {
-                    player.autoplay(player);
+
+                if (serverConfig?.settings?.autoplay && player.current && player.current.track) {
+                    try {
+                        await player.autoplay(player);
+                    } catch (autoplayError) {
+                        console.error('Autoplay error:', autoplayError.message);
+                        // If autoplay fails, destroy the player
+                        if (this.client.statusManager) {
+                            await this.client.statusManager.onPlayerDisconnect(player.guildId);
+                        }
+                        player.destroy();
+                    }
                 } else {
                     if (this.client.statusManager) {
                         await this.client.statusManager.onPlayerDisconnect(player.guildId);

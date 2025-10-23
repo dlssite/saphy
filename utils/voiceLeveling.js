@@ -36,18 +36,24 @@ async function updateUserVoiceXP(userId, durationInSeconds) {
 
 // Function to calculate XP based on duration
 
-function calculateXP(durationInSeconds) {
+function calculateXP(durationInSeconds, guildId) {
   // Implement your XP calculation logic here
   // For example, 1 XP per minute:
-  return Math.floor(durationInSeconds / 3);
+  const Server = require('../models/Server');
+  const server = Server.findOne({ _id: guildId });
+  const xpPerMinute = server?.settings?.levelingXPPerMinute || 1;
+  return Math.floor(durationInSeconds / 60) * xpPerMinute;
 }
 
 // Function to calculate level based on XP
 
-function calculateLevel(xp) {
+function calculateLevel(xp, guildId) {
   // Implement your level calculation logic here
-  // Changed to linear scaling: level up every 50 XP
-  return Math.floor(xp / 50) + 1;
+  // Changed to linear scaling: level up every 100 XP
+  const Server = require('../models/Server');
+  const server = Server.findOne({ _id: guildId });
+  const xpPerLevel = server?.settings?.levelingXPPerLevel || 100;
+  return Math.floor(xp / xpPerLevel) + 1;
 }
 
 // Function to notify user of level up (implementation depends on your bot framework)
