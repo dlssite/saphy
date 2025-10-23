@@ -26,7 +26,9 @@ const serverSchema = new mongoose.Schema({
         levelingChannelId: String,
         levelingNotificationImage: String,
         levelingEmbedColor: String,
-        levelingMessages: [String]
+        levelingMessages: [String],
+        levelingXPPerMinute: { type: Number, default: 1 },
+        levelingXPPerLevel: { type: Number, default: 100 }
     },
 
     aiPersonality: {

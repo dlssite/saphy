@@ -41,8 +41,8 @@ module.exports = {
                     }
 
                     const oldLevel = user.level;
-                    user.xp += calculateXP(60); // Award XP for 60 seconds
-                    user.level = calculateLevel(user.xp);
+                    user.xp += calculateXP(60, guildId); // Award XP for 60 seconds
+                    user.level = calculateLevel(user.xp, guildId);
                     console.log(`[Voice XP] User ${newState.member.user.tag} gained ${calculateXP(60)} XP. New XP: ${user.xp}, New Level: ${user.level}`);
 
                     await user.save();
@@ -106,7 +106,7 @@ module.exports = {
                 // Award remaining XP for the time not covered by intervals
                 const remainingSeconds = durationInSeconds % 60;
                 if (remainingSeconds > 0) {
-                    const xpGained = calculateXP(remainingSeconds);
+                    const xpGained = calculateXP(remainingSeconds, guildId);
 
                     try {
                         // Find or create the user in the database
@@ -122,7 +122,7 @@ module.exports = {
 
                         const oldLevel = user.level;
                         user.xp += xpGained;
-                        user.level = calculateLevel(user.xp);
+                        user.level = calculateLevel(user.xp, guildId);
                         console.log(`[Voice XP] User ${oldState.member.user.tag} gained ${xpGained} XP for remaining time. New XP: ${user.xp}, New Level: ${user.level}`);
 
                         await user.save();
@@ -185,8 +185,8 @@ module.exports = {
                     }
 
                     const oldLevel = user.level;
-                    user.xp += calculateXP(60); // Award XP for 60 seconds
-                    user.level = calculateLevel(user.xp);
+                    user.xp += calculateXP(60, guildId); // Award XP for 60 seconds
+                    user.level = calculateLevel(user.xp, guildId);
                     console.log(`[Voice XP] User ${newState.member.user.tag} gained ${calculateXP(60)} XP. New XP: ${user.xp}, New Level: ${user.level}`);
 
                     await user.save();

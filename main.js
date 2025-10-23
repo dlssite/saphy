@@ -349,9 +349,10 @@ class EventHandlerRegistrationService {
             this.boundEventHandlers++;
         }
         const { startVoiceActivityUpdates } = require('./utils/voiceActivityUpdater');
-        // Pass clientInstance to startVoiceActivityUpdates if needed
-        // const { userJoinTimestamps } = require('./events/voiceStateUpdate'); // Import userJoinTimestamps here if not available in startVoiceActivityUpdates scope
-        // startVoiceActivityUpdates(userJoinTimestamps); // Call after events are bound
+        const { userJoinTimestamps } = require('./events/voiceStateUpdate');
+        // Start voice activity updates for all guilds
+        // Note: This assumes a single global map; for per-guild, modify accordingly
+        startVoiceActivityUpdates(userJoinTimestamps, null); // Pass null for guildId as it's global
 
 
  return {

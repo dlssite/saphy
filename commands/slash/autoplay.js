@@ -39,7 +39,7 @@ module.exports = {
 
             if (conditions.hasActivePlayer) {
                 const player = conditions.player;
-                player.setAutoplay = enabled;
+                player.isAutoplay = enabled;
             }
 
             const embed = new EmbedBuilder().setDescription(`🎲 Autoplay **${enabled ? 'enabled' : 'disabled'}**`);

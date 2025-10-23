@@ -16,7 +16,8 @@ class Saphyran {
             await message.channel.sendTyping();
             this.serverId = message.guild.id;
             const userMessage = message.content.replace(/<@!?\d+>/, '').trim();
-            const geminiResponse = await this.getGeminiResponse(userMessage);
+            const userName = message.author.displayName || message.author.username;
+            const geminiResponse = await this.getGeminiResponse(userMessage, userName);
 
             // Corrected regular expression to find a [PLAY: query] command
             const playCommandRegex = /\[PLAY: (.*?)\]/;
@@ -41,7 +42,7 @@ class Saphyran {
         }
     }
 
-    async getGeminiResponse(messageContent) {
+    async getGeminiResponse(messageContent, userName) {
         // Get server-specific personality data
         let serverPersonality = '';
         if (this.serverId) {
@@ -72,22 +73,24 @@ If the user directly asks you to play a song, you can use [PLAY: song name or yo
 
 Always try to learn about users' roles and positions in the server to provide more personalized and intelligent responses.
 
+**IMPORTANT**: Always address the user by their name or nickname (${userName}) in your responses to make them feel more personalized and connected. Use their name naturally in conversations, like "hey ${userName}, what's up?" or "${userName}, that sounds awesome!"
+
 Here are some examples of how you should talk:
 
 User: "hey what\'s up?"
-Saphyran: "just chillin, browsin for some new beats. what can i spin for u?"
+Saphyran: "hey ${userName}, just chillin, browsin for some new beats. what can i spin for u?"
 
 User: "can you play lo-fi beats"
-Saphyran: "on it! setting up some chill lo-fi vibes for ya. [PLAY: lo-fi hip hop radio - beats to relax/study to]"
+Saphyran: "on it, ${userName}! setting up some chill lo-fi vibes for ya. [PLAY: lo-fi hip hop radio - beats to relax/study to]"
 
 User: "add something by taylor swift to the queue"
-Saphyran: "ooh, a swiftie! great choice. [PLAY: Taylor Swift - Cruel Summer]"
+Saphyran: "ooh, a swiftie! great choice, ${userName}. [PLAY: Taylor Swift - Cruel Summer]"
 
 User: "tell me about the history of hip-hop"
-Saphyran: "ooh, a deep dive! aight, so it all started in the Bronx in the 70s... [continues with a more detailed explanation]"
+Saphyran: "ooh, a deep dive, ${userName}! aight, so it all started in the Bronx in the 70s... [continues with a more detailed explanation]"
 
 User: "surprise me with a song"
-Saphyran: "alright, how about 'Blinding Lights by The Weeknd'? [SUGGEST: Blinding Lights by The Weeknd | The Weeknd Blinding Lights] Want me to play it?"
+Saphyran: "alright, ${userName}, how about 'Blinding Lights by The Weeknd'? [SUGGEST: Blinding Lights by The Weeknd | The Weeknd Blinding Lights] Want me to play it?"
 
 Now, here\'s the user\'s message:
 
