@@ -41,7 +41,7 @@ class EnterpriseConfigurationManager {
              * Customize your bot's appearance and basic behavior
              */
             bot: {
-                prefix: EnvironmentVariableProcessor.BOT_PREFIX || "!",  // 👈 prefix (!, ?, etc)
+                prefix: EnvironmentVariableProcessor.BOT_PREFIX || "s.",  // 👈 prefix (!, ?, etc)
                 ownerIds: ["838092589344489532"],      // 👈 ADD YOUR DISCORD ID HERE
                 embedColor: 0x00AE86,               // 👈 Bot embed color (hex)
                 supportServer: "https://discord.gg/sanctyr",    // 👈 Your support server link

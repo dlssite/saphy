@@ -9,6 +9,10 @@ module.exports = {
 
     async execute(message, args, client) {
         try {
+            // Get dynamic prefix from config
+            const config = require('../../config');
+            const prefix = config.bot.prefix || '!';
+
             // Load message commands
             const msgCommandsPath = path.join(__dirname, '..', 'message');
             const msgFiles = fs.readdirSync(msgCommandsPath).filter(file => file.endsWith('.js'));
@@ -55,7 +59,9 @@ module.exports = {
                     )
                 },
                 '🏆 Leveling': {
-                    message: [],
+                    message: messageCommands.filter(cmd =>
+                        ['level', 'leaderboard', 'customize-level-card'].includes(cmd.name)
+                    ),
                     slash: slashCommands.filter(cmd =>
                         ['level', 'leaderboard', 'setup-leveling', 'setup-level-card', 'customize-level-card', 'setup-leveling-customization', 'setup-leveling-image', 'setup-leveling-color', 'setup-leveling-messages'].includes(cmd.name)
                     )

@@ -601,9 +601,8 @@ async function handleAIFavoritesModal(interaction, client) {
 }
 
 async function handleHelpCategorySelect(interaction, client) {
-    await interaction.deferUpdate();
-
     try {
+        await interaction.deferUpdate();
         const selectedCategory = interaction.values[0];
 
         // Load commands again to get fresh data
@@ -654,7 +653,9 @@ async function handleHelpCategorySelect(interaction, client) {
                 )
             },
             '🏆 Leveling': {
-                message: [],
+                message: messageCommands.filter(cmd =>
+                    ['level', 'leaderboard', 'customize-level-card'].includes(cmd.name)
+                ),
                 slash: slashCommands.filter(cmd =>
                     ['level', 'leaderboard', 'setup-leveling', 'setup-level-card', 'customize-level-card', 'setup-leveling-customization', 'setup-leveling-image', 'setup-leveling-color', 'setup-leveling-messages'].includes(cmd.name)
                 )
@@ -684,8 +685,10 @@ async function handleHelpCategorySelect(interaction, client) {
         if (categoryData.message.length > 0) {
             description += `**💬 Message Commands:**\n`;
             categoryData.message.forEach(cmd => {
+                const config = require('../config');
+                const prefix = config.bot.prefix || '!';
                 const aliases = cmd.aliases.length > 0 ? ` (${cmd.aliases.join(', ')})` : '';
-                description += `• \`!${cmd.name}${aliases}\` - ${cmd.description}\n`;
+                description += `• \`${prefix}${cmd.name}${aliases}\` - ${cmd.description}\n`;
             });
             description += '\n';
         }

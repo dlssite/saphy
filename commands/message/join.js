@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     name: 'join',
-    aliases: ['connect', 'summon'],
+    aliases: ['connect', 'summon', 'joinvc', 'jvc', 'svc', 'summonvc'],
     description: 'Join your voice channel',
 
     async execute(message, args, client) {
