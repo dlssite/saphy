@@ -17,7 +17,11 @@ class Saphyran {
             this.serverId = message.guild.id;
             const userMessage = message.content.replace(/<@!?\d+>/, '').trim();
             const userName = message.author.displayName || message.author.username;
-            const geminiResponse = await this.getGeminiResponse(userMessage, userName);
+
+            // Fetch conversation history
+            const conversationHistory = await this.getConversationHistory(message);
+
+            const geminiResponse = await this.getGeminiResponse(userMessage, userName, conversationHistory);
 
             // Corrected regular expression to find a [PLAY: query] command
             const playCommandRegex = /\[PLAY: (.*?)\]/;
@@ -42,7 +46,42 @@ class Saphyran {
         }
     }
 
-    async getGeminiResponse(messageContent, userName) {
+    async getConversationHistory(message) {
+        try {
+            // Fetch last 20 messages from the channel
+            const messages = await message.channel.messages.fetch({ limit: 20 });
+
+            // Filter out command messages (prefix and slash commands) but keep bot messages
+            const config = require('../config');
+            const filteredMessages = messages
+                .filter(msg => {
+                    // Skip the current message being processed
+                    if (msg.id === message.id) return false;
+
+                    // Skip messages that start with bot prefix
+                    if (msg.content.startsWith(config.bot.prefix)) return false;
+
+                    // Skip slash commands (messages that start with /)
+                    if (msg.content.startsWith('/')) return false;
+
+                    // Keep all other messages (including bot messages)
+                    return true;
+                })
+                .reverse() // Reverse to get chronological order (oldest first)
+                .map(msg => {
+                    const displayName = msg.author.displayName || msg.author.username;
+                    const content = msg.content.replace(/<@!?\d+>/g, '').trim();
+                    return `${displayName}: ${content}`;
+                });
+
+            return filteredMessages.join('\n');
+        } catch (error) {
+            console.error('Error fetching conversation history:', error);
+            return '';
+        }
+    }
+
+    async getGeminiResponse(messageContent, userName, conversationHistory) {
         // Get server-specific personality data
         let serverPersonality = '';
         if (this.serverId) {
@@ -75,7 +114,7 @@ Always try to learn about users' roles and positions in the server to provide mo
 
 **IMPORTANT**: Always address the user by their name or nickname (${userName}) in your responses to make them feel more personalized and connected. Use their name naturally in conversations, like "hey ${userName}, what's up?" or "${userName}, that sounds awesome!"
 
-Here are some examples of how you should talk:
+${conversationHistory ? `**Recent Conversation Context:**\n${conversationHistory}\n\n` : ''}Here are some examples of how you should talk:
 
 User: "hey what\'s up?"
 Saphyran: "hey ${userName}, just chillin, browsin for some new beats. what can i spin for u?"

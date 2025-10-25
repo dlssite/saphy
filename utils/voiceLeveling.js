@@ -73,11 +73,11 @@ async function createLevelUpEmbed(member, newLevel, guildId) {
   const embedColor = server?.settings?.levelingEmbedColor || '#00ff00';
   const notificationImage = server?.settings?.levelingNotificationImage || guild.iconURL({ dynamic: true, size: 512 });
   const defaultMessages = [
-    '🎉 Congratulations {user}! You leveled up to level **{level}**!',
-    '🚀 {user} just reached level **{level}**! Keep it up!',
-    '⭐ Amazing! {user} leveled up to **{level}**!',
-    '🎊 {user} is now level **{level}**! Fantastic job!',
-    '🌟 {user} leveled up to **{level}**! You\'re on fire!'
+    '🎉 Congratulations {user}! You\'ve just leveled up to level **{level}**! Your dedication to voice activity is paying off—keep chatting and climbing the ranks!',
+    '🚀 {user} just blasted off to level **{level}**! Keep it up, superstar—you\'re making waves in the server with your awesome presence!',
+    '⭐ Amazing job, {user}! You\'ve reached level **{level}**! Your voice is a beacon of energy—shine on and inspire others to join the fun!',
+    '🎊 {user} is now level **{level}**! Fantastic job on this milestone—what an incredible journey you\'ve embarked on in our community!',
+    '🌟 {user} leveled up to **{level}**! You\'re on fire, and it\'s contagious—keep the momentum going and light up the server even more!'
   ];
 
   const messages = server?.settings?.levelingMessages && server.settings.levelingMessages.length > 0

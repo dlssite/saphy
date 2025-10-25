@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { getUserLevelAndXP } = require('../../utils/voiceLeveling');
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
@@ -36,6 +36,21 @@ function adjustColor(color, amount) {
     return (usePound ? '#' : '') + (r << 16 | g << 8 | b).toString(16);
 }
 
+// Helper function to draw rounded rectangle
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('level')
@@ -57,6 +72,7 @@ module.exports = {
             const server = await require('../../models/Server').findById(guildId) || {};
             const serverCard = server.levelCard || {};
             const userCard = server.userLevelCards?.[userId] || {};
+            const xpPerLevel = server.settings?.levelingXPPerLevel || 100;
 
             // Create the level card image
             const canvas = createCanvas(800, 300);
@@ -76,14 +92,28 @@ module.exports = {
                 drawGradientBackground(ctx, userCard, serverCard);
             }
 
-            // Add some decorative elements
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.fillRect(0, 0, 800, 300);
+            // Add shadow effect
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
 
-            // Border with rounded corners effect
-            ctx.strokeStyle = userCard.textColor || serverCard.textColor || '#ffffff';
-            ctx.lineWidth = 6;
-            ctx.strokeRect(15, 15, 770, 270);
+            // Main card background with rounded corners
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            drawRoundedRect(ctx, 20, 20, 760, 260, 30);
+            ctx.fill();
+
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Inner border
+            ctx.strokeStyle = userCard.accentColor || serverCard.accentColor || '#ffeb3b';
+            ctx.lineWidth = 3;
+            drawRoundedRect(ctx, 25, 25, 750, 250, 25);
+            ctx.stroke();
 
             // Avatar
             try {
@@ -91,17 +121,17 @@ module.exports = {
                 const avatar = await loadImage(avatarURL);
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(150, 150, 60, 0, Math.PI * 2);
+                ctx.arc(120, 150, 70, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.clip();
-                ctx.drawImage(avatar, 90, 90, 120, 120);
+                ctx.drawImage(avatar, 50, 80, 140, 140);
                 ctx.restore();
 
                 // Avatar border
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
+                ctx.strokeStyle = userCard.accentColor || serverCard.accentColor || '#ffeb3b';
+                ctx.lineWidth = 5;
                 ctx.beginPath();
-                ctx.arc(150, 150, 62, 0, Math.PI * 2);
+                ctx.arc(120, 150, 72, 0, Math.PI * 2);
                 ctx.stroke();
             } catch (error) {
                 console.log('Failed to load avatar, using default');
@@ -109,63 +139,46 @@ module.exports = {
 
             // Username
             ctx.fillStyle = userCard.textColor || serverCard.textColor || '#ffffff';
-            ctx.font = 'bold 32px Arial';
+            ctx.font = 'bold 36px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText(interaction.user.username, 250, 120);
+            ctx.fillText(interaction.user.username, 220, 110);
 
             // Level
             ctx.fillStyle = userCard.accentColor || serverCard.accentColor || '#ffeb3b';
-            ctx.font = 'bold 48px Arial';
-            ctx.fillText(`Level ${userData.level}`, 250, 180);
+            ctx.font = 'bold 52px Arial';
+            ctx.fillText(`Level ${userData.level}`, 220, 170);
 
             // XP
             ctx.fillStyle = userCard.textColor || serverCard.textColor || '#ffffff';
-            ctx.font = '24px Arial';
-            ctx.fillText(`${userData.xp} XP`, 250, 220);
+            ctx.font = '28px Arial';
+            ctx.fillText(`${userData.xp.toLocaleString()} XP`, 220, 210);
 
             // Progress bar background
-            ctx.fillStyle = userCard.textColor || serverCard.textColor || '#ffffff';
-            ctx.fillRect(250, 240, 400, 20);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            drawRoundedRect(ctx, 220, 230, 500, 25, 12);
+            ctx.fill();
 
             // Progress bar fill
-            const xpForCurrentLevel = (userData.level - 1) * 50;
-            const xpForNextLevel = userData.level * 50;
+            const xpForCurrentLevel = (userData.level - 1) * xpPerLevel;
+            const xpForNextLevel = userData.level * xpPerLevel;
             const progress = (userData.xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel);
             ctx.fillStyle = userCard.progressColor || serverCard.progressColor || '#4caf50';
-            ctx.fillRect(250, 240, 400 * progress, 20);
+            drawRoundedRect(ctx, 220, 230, 500 * progress, 25, 12);
+            ctx.fill();
 
             // Progress text
-            ctx.fillStyle = '#000000';
-            ctx.font = '16px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '18px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(`${userData.xp - xpForCurrentLevel}/${xpForNextLevel - xpForCurrentLevel} XP to next level`, 450, 275);
+            const currentLevelXP = userData.xp - xpForCurrentLevel;
+            const requiredXP = xpForNextLevel - xpForCurrentLevel;
+            ctx.fillText(`${currentLevelXP}/${requiredXP} XP`, 470, 248);
 
             // Convert canvas to buffer
             const buffer = canvas.toBuffer();
             const attachment = new AttachmentBuilder(buffer, { name: 'level-card.png' });
 
-            // Calculate progress to next level
-            const currentLevelXP = userData.xp - xpForCurrentLevel;
-            const requiredXP = xpForNextLevel - xpForCurrentLevel;
-            const progressPercent = Math.round((currentLevelXP / requiredXP) * 100);
-
-            const embed = new EmbedBuilder()
-                .setColor(userCard.accentColor || serverCard.accentColor || '#FFD700')
-                .setTitle(`🏆 ${interaction.user.displayName}'s Voice Level Card`)
-                .setDescription(`*Voice activity level and experience points*`)
-                .setImage('attachment://level-card.png')
-                .addFields(
-                    { name: '📊 Level', value: `**${userData.level}**`, inline: true },
-                    { name: '⭐ XP', value: `**${userData.xp.toLocaleString()}**`, inline: true },
-                    { name: '📈 Progress', value: `**${currentLevelXP}/${requiredXP} XP** (${progressPercent}%)`, inline: true }
-                )
-                .setFooter({
-                    text: `Keep chatting in voice channels to level up! | ${interaction.guild.name}`,
-                    iconURL: interaction.guild.iconURL({ dynamic: true, size: 32 })
-                })
-                .setTimestamp();
-
-            await interaction.editReply({ embeds: [embed], files: [attachment] });
+            await interaction.editReply({ files: [attachment] });
 
         } catch (error) {
             console.error('Error fetching user level:', error);

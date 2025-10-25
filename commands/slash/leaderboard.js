@@ -15,16 +15,13 @@ module.exports = {
             const leaderboard = await getLeaderboard(interaction.guild.id);
 
             if (!leaderboard || leaderboard.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor('#FFFF00')
-                    .setDescription('📊 The leaderboard is currently empty!');
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ content: '📊 The leaderboard is currently empty!' });
             }
 
             const totalPages = Math.ceil(leaderboard.length / ITEMS_PER_PAGE);
             const page = 0;
 
-            const embed = await buildLeaderboardEmbed(interaction, leaderboard, page, totalPages);
+            const embed = await generateLeaderboardEmbed(interaction, leaderboard, page, totalPages);
             const components = buildPaginationComponents(page, totalPages);
 
             const message = await interaction.editReply({ embeds: [embed], components });
@@ -35,56 +32,45 @@ module.exports = {
 
         } catch (error) {
             console.error('Error fetching leaderboard:', error);
-            const embed = new EmbedBuilder()
-                .setColor('#FF0000')
-                .setDescription('❌ An error occurred while fetching the leaderboard.');
-            return interaction.editReply({ embeds: [embed] });
+            return interaction.editReply({ content: '❌ An error occurred while fetching the leaderboard.' });
         }
     },
 };
 
-async function buildLeaderboardEmbed(interaction, leaderboard, page, totalPages) {
+async function generateLeaderboardEmbed(interaction, leaderboard, page, totalPages) {
     const start = page * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
     const pageData = leaderboard.slice(start, end);
 
-    const embed = new EmbedBuilder()
-        .setColor('#FFD700')
-        .setTitle('🏆 Voice Activity Leaderboard')
-        .setDescription('Top members by voice activity levels and XP!')
-        .setThumbnail(interaction.guild.iconURL({ dynamic: true, size: 128 }) || null)
-        .setTimestamp()
-        .setFooter({
-            text: `Page ${page + 1} of ${totalPages} | Requested by ${interaction.user.username}`,
-            iconURL: interaction.user.displayAvatarURL({ dynamic: true, size: 32 })
-        });
+    // Get server customizations
+    const server = await require('../../models/Server').findById(interaction.guild.id) || {};
+    const serverCard = server.levelCard || {};
 
+    const embedColor = serverCard.accentColor || '#ffeb3b';
     const rankEmojis = ['🥇', '🥈', '🥉'];
+
+    let description = `**Page ${page + 1} of ${totalPages}**\n\n`;
 
     for (let i = 0; i < pageData.length; i++) {
         const user = pageData[i];
         const globalRank = start + i + 1;
-        const emoji = globalRank <= 3 ? rankEmojis[globalRank - 1] : `**${globalRank}.**`;
+        const rankText = globalRank <= 3 ? rankEmojis[globalRank - 1] : `${globalRank}.`;
 
         try {
             const member = await interaction.guild.members.fetch(user.discordId);
-            const username = member.user.username;
-            const displayName = member.displayName !== username ? `${member.displayName} (${username})` : username;
-
-            embed.addFields({
-                name: `${emoji} ${displayName}`,
-                value: `**Level:** ${user.level} | **XP:** ${user.xp.toLocaleString()}`,
-                inline: false
-            });
+            description += `${rankText} ${member.user.username} - Level ${user.level} • ${user.xp.toLocaleString()} XP\n`;
         } catch (error) {
             console.error(`Could not fetch member for user ID ${user.discordId}:`, error);
-            embed.addFields({
-                name: `${emoji} Unknown User`,
-                value: `**Level:** ${user.level} | **XP:** ${user.xp.toLocaleString()}`,
-                inline: false
-            });
+            description += `${rankText} Unknown User - Level ${user.level} • ${user.xp.toLocaleString()} XP\n`;
         }
     }
+
+    const embed = new EmbedBuilder()
+        .setTitle('🏆 Voice Activity Leaderboard')
+        .setDescription(description)
+        .setColor(embedColor)
+        .setTimestamp()
+        .setFooter({ text: `Total Users: ${leaderboard.length}` });
 
     return embed;
 }

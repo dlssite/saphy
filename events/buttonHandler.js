@@ -750,10 +750,14 @@ module.exports = {
 
             if (newPage === cache.page) return; // No change
 
-            const embed = await buildLeaderboardEmbed(interaction, cache.leaderboard, newPage, cache.totalPages);
-            const components = buildPaginationComponents(newPage, cache.totalPages);
+            // Generate new image for the page
+            const { generateLeaderboardImage } = require('../commands/slash/leaderboard');
+            const buffer = await generateLeaderboardImage(interaction, cache.leaderboard, newPage, cache.totalPages);
+            const { AttachmentBuilder } = require('discord.js');
+            const attachment = new AttachmentBuilder(buffer, { name: 'leaderboard.png' });
+            const components = require('../commands/slash/leaderboard').buildPaginationComponents(newPage, cache.totalPages);
 
-            await interaction.update({ embeds: [embed], components });
+            await interaction.update({ files: [attachment], components });
 
             // Update cache
             cache.page = newPage;

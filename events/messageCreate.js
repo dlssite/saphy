@@ -148,8 +148,25 @@ module.exports = {
                 args = message.content.slice(config.bot.prefix.length).trim().split(/ +/);
                 commandName = args.shift().toLowerCase();
             }
-            else if (message.mentions.has(client.user) && !message.mentions.everyone) {
-                const content = message.content.replace(`<@${client.user.id}>`, '').trim();
+            else if ((message.mentions.has(client.user) && !message.mentions.everyone) ||
+                     (message.reference && message.reference.messageId)) {
+                // Check if this is a reply to a bot message
+                let isReplyToBot = false;
+                if (message.reference && message.reference.messageId) {
+                    try {
+                        const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+                        if (referencedMessage.author.id === client.user.id) {
+                            isReplyToBot = true;
+                        }
+                    } catch (error) {
+                        // Ignore fetch errors
+                    }
+                }
+
+                let content = message.content;
+                if (message.mentions.has(client.user)) {
+                    content = content.replace(`<@${client.user.id}>`, '').trim();
+                }
 
                 // Check if it's a play request (e.g., "play story by nf" or "play me story by nf")
                 if (content.toLowerCase().startsWith('play')) {
@@ -183,6 +200,145 @@ module.exports = {
                         await message.reply(`🎵 Use \`/play ${songQuery}\` to listen!`);
                         return;
                     }
+                }
+
+                // If it's a reply to bot or mention, treat as AI interaction
+                if (isReplyToBot || message.mentions.has(client.user)) {
+                    // Let Saphyran handle this as an AI response
+                    const response = await saphyran.getResponse(message);
+
+                    // Check for [SUGGEST: ...] pattern
+                    const suggestRegex = /\[SUGGEST: ([^\|]+)\|([^\]]+)\]/;
+                    const suggestMatch = response.text.match(suggestRegex);
+
+                    if (suggestMatch) {
+                        const songInfo = suggestMatch[1].trim();
+                        const searchQuery = suggestMatch[2].trim();
+                        const cleanText = response.text.replace(suggestRegex, '').trim();
+
+                        // Play the song directly if central system is enabled and properly configured
+                        const serverConfig = await Server.findById(message.guild.id);
+                        if (serverConfig?.centralSetup?.enabled && serverConfig.centralSetup.vcChannelId && serverConfig.centralSetup.channelId) {
+                            try {
+                                const ConditionChecker = require('../utils/checks');
+                                const PlayerHandler = require('../utils/player');
+
+                                const checker = new ConditionChecker(client);
+                                const conditions = await checker.checkMusicConditions(message.guild.id, message.author.id, serverConfig.centralSetup.vcChannelId, true);
+
+                                if (!conditions.hasActivePlayer || conditions.sameVoiceChannel) {
+                                    const playerHandler = new PlayerHandler(client);
+                                    const player = await playerHandler.createPlayer(
+                                        message.guild.id,
+                                        serverConfig.centralSetup.vcChannelId,
+                                        serverConfig.centralSetup.channelId
+                                    );
+
+                                    const result = await playerHandler.playSong(player, searchQuery, message.author);
+
+                                    if (result.type === 'track' || result.type === 'playlist') {
+                                        // Get voice channel name (with null check)
+                                        let voiceChannelName = 'central voice channel';
+                                        try {
+                                            const voiceChannel = await client.channels.fetch(serverConfig.centralSetup.vcChannelId);
+                                            voiceChannelName = voiceChannel?.name || 'central voice channel';
+                                        } catch (error) {
+                                            console.error('Error fetching voice channel:', error);
+                                        }
+
+                                        // React with checkmark
+                                        await message.react('✅').catch(() => {});
+
+                                        // Reply with confirmation including clickable voice channel
+                                        await message.reply(`${cleanText}\n\n🎵 **"${songInfo}"** has been added to the music queue in <#${serverConfig.centralSetup.vcChannelId}>!`);
+
+                                        // Delete the original message after 10 seconds, like user messages
+                                        setTimeout(() => safeDeleteMessage(message), 10000);
+                                        return;
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error playing song from AI suggestion:', error);
+                            }
+                        }
+
+                        // Fallback: suggest using play command
+                        await message.reply(`${cleanText}\n\n🎵 **${songInfo}**\n\n*Use \`/play ${searchQuery}\` to listen!*`);
+                        return;
+                    }
+
+                    if (response.text) {
+                        // Check if TTS is enabled and configured for this server
+                        const serverConfig = await Server.findById(message.guild.id);
+                        if (serverConfig?.ttsSettings?.enabled && serverConfig?.ttsSettings?.apiKey) {
+                            try {
+                                const TTSManager = require('../utils/tts');
+                                const ttsManager = new TTSManager(client);
+
+                                // Check if bot is in a voice channel
+                                const botMember = message.guild.members.me;
+                                if (botMember.voice?.channelId) {
+                                    await ttsManager.speakMessage(message.guild.id, response.text, serverConfig.ttsSettings.voice, serverConfig.ttsSettings.model, serverConfig.ttsSettings.apiKey);
+                                }
+                            } catch (ttsError) {
+                                console.error('TTS Error:', ttsError.message);
+                                // Continue with normal reply if TTS fails
+                            }
+                        }
+
+                        await message.reply(response.text);
+                    }
+                    if (response.query) {
+                        // Play the song directly if central system is enabled and properly configured
+                        const serverConfig = await Server.findById(message.guild.id);
+                        if (serverConfig?.centralSetup?.enabled && serverConfig.centralSetup.vcChannelId && serverConfig.centralSetup.channelId) {
+                            try {
+                                const ConditionChecker = require('../utils/checks');
+                                const PlayerHandler = require('../utils/player');
+
+                                const checker = new ConditionChecker(client);
+                                const conditions = await checker.checkMusicConditions(message.guild.id, message.author.id, serverConfig.centralSetup.vcChannelId, true);
+
+                                if (!conditions.hasActivePlayer || conditions.sameVoiceChannel) {
+                                    const playerHandler = new PlayerHandler(client);
+                                    const player = await playerHandler.createPlayer(
+                                        message.guild.id,
+                                        serverConfig.centralSetup.vcChannelId,
+                                        serverConfig.centralSetup.channelId
+                                    );
+
+                                    const result = await playerHandler.playSong(player, response.query, message.author);
+
+                                    if (result.type === 'track' || result.type === 'playlist') {
+                                        // Get voice channel name (with null check)
+                                        let voiceChannelName = 'central voice channel';
+                                        try {
+                                            const voiceChannel = await client.channels.fetch(serverConfig.centralSetup.vcChannelId);
+                                            voiceChannelName = voiceChannel?.name || 'central voice channel';
+                                        } catch (error) {
+                                            console.error('Error fetching voice channel:', error);
+                                        }
+
+                                        // React with checkmark
+                                        await message.react('✅').catch(() => {});
+
+                                        // Reply with confirmation including voice channel
+                                        await message.reply(`🎵 **"${response.query}"** has been added to the music queue in **${voiceChannelName}**!`);
+
+                                        // Delete the original message after 10 seconds, like user messages
+                                        setTimeout(() => safeDeleteMessage(message), 10000);
+                                        return;
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error playing song from AI suggestion:', error);
+                            }
+                        }
+
+                        // Fallback: suggest using play command
+                        await message.reply(`🎵 Use \`/play ${response.query}\` to listen!`);
+                    }
+                    return;
                 }
 
                 // Otherwise, treat as regular command
