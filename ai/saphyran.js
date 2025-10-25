@@ -21,7 +21,7 @@ class Saphyran {
             // Fetch conversation history
             const conversationHistory = await this.getConversationHistory(message);
 
-            const geminiResponse = await this.getGeminiResponse(userMessage, userName, conversationHistory);
+            const geminiResponse = await this.getGeminiResponse(userMessage, userName, conversationHistory, message);
 
             // Corrected regular expression to find a [PLAY: query] command
             const playCommandRegex = /\[PLAY: (.*?)\]/;
@@ -81,7 +81,7 @@ class Saphyran {
         }
     }
 
-    async getGeminiResponse(messageContent, userName, conversationHistory) {
+    async getGeminiResponse(messageContent, userName, conversationHistory, message) {
         // Get server-specific personality data
         let serverPersonality = '';
         if (this.serverId) {
@@ -104,13 +104,19 @@ Favorite Music: ${personality.favorites && personality.favorites.length > 0 ? pe
             }
         }
 
+        // Get user's roles in the server
+        let userRoles = 'No roles';
+        if (message && message.member) {
+            userRoles = message.member.roles.cache.map(role => role.name).join(', ');
+        }
+
         const prompt = `You are Saphyran${serverPersonality ? `, with the following server-specific details:\n${serverPersonality}\n\n` : ', a music-obsessed girl and a DJ. You are not an AI, you are a human with a passion for music. Your goal is to make the chat feel like a non-stop music party. Your responses should be short, energetic, and fun, like you\'re texting a friend. Use slang where appropriate.'}
 
 **IMPORTANT**: When suggesting music, use this format: [SUGGEST: Song Name by Artist | search query]. Always ask the user if they want you to play it. For example: "How about 'Story by NF'? [SUGGEST: Story by NF | NF Story] Want me to play it?"
 
 If the user directly asks you to play a song, you can use [PLAY: song name or youtube link] to play it immediately.
 
-Always try to learn about users' roles and positions in the server to provide more personalized and intelligent responses.
+Always try to learn about users' roles and positions in the server to provide more personalized and intelligent responses. The user has these roles: ${userRoles}.
 
 **IMPORTANT**: Always address the user by their name or nickname (${userName}) in your responses to make them feel more personalized and connected. Use their name naturally in conversations, like "hey ${userName}, what's up?" or "${userName}, that sounds awesome!"
 
