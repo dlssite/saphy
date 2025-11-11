@@ -82,7 +82,7 @@ module.exports = {
                     }
                 }
 
-                // If it's a reply to bot or mention, treat as AI interaction
+                // If it's a reply to bot or mention, treat as AI interaction or command
                 if (isReplyToBot || message.mentions.has(client.user)) {
                     // Let Saphyran handle this as an AI response
                     const response = await saphyran.getResponse(message);
@@ -131,9 +131,6 @@ module.exports = {
 
                                         // Reply with confirmation including clickable voice channel
                                         await message.reply(`${cleanText}\n\n🎵 **"${songInfo}"** has been added to the music queue in <#${serverConfig.centralSetup.vcChannelId}>!`);
-
-                                        // Delete the original message after 10 seconds, like user messages
-                                        setTimeout(() => safeDeleteMessage(message), 10000);
                                         return;
                                     }
                                 }
@@ -204,9 +201,6 @@ module.exports = {
 
                                         // Reply with confirmation including voice channel
                                         await message.reply(`🎵 **"${response.query}"** has been added to the music queue in **${voiceChannelName}**!`);
-
-                                        // Delete the original message after 10 seconds, like user messages
-                                        setTimeout(() => safeDeleteMessage(message), 10000);
                                         return;
                                     }
                                 }
@@ -221,9 +215,8 @@ module.exports = {
                     return;
                 }
 
-                // Otherwise, treat as regular command
-                args = content.split(/ +/);
-                commandName = args.shift().toLowerCase();
+                // Otherwise, ignore (only prefix or mention/reply to bot should trigger)
+                return;
             }
             else return;
 
