@@ -84,6 +84,19 @@ module.exports = {
 
                 // If it's a reply to bot or mention, treat as AI interaction or command
                 if (isReplyToBot || message.mentions.has(client.user)) {
+                    // Check user access permissions for AI responses
+                    const hasAccess = await checkUserAccess(message.member, message.guild.id);
+                    if (!hasAccess) {
+                        return await message.reply({
+                            embeds: [{
+                                color: 0xff0000,
+                                title: '❌ Access Denied',
+                                description: `You need a specific role to use this bot.\n\nPlease contact a server administrator to get the required role.`,
+                                footer: { text: 'Contact an admin if you believe this is an error.' }
+                            }]
+                        });
+                    }
+
                     // Let Saphyran handle this as an AI response
                     const response = await saphyran.getResponse(message);
 
@@ -398,6 +411,18 @@ function findCommand(discordClient, commandIdentifier) {
         commandObject.aliases && commandObject.aliases.includes(commandIdentifier)
     );
     return aliasCommandLookup;
+}
+
+async function checkUserAccess(member, guildId) {
+    try {
+        const serverConfig = await Server.findById(guildId);
+        if (!serverConfig?.user_access_role) return true; // No role restriction
+
+        return member.roles.cache.has(serverConfig.user_access_role);
+    } catch (error) {
+        console.error('Error checking user access:', error);
+        return false; // Deny access on error
+    }
 }
 
 setInterval(() => {

@@ -39,13 +39,7 @@ module.exports = {
 
 
         else if (interaction.isModalSubmit()) {
-            if (interaction.customId === 'ai_personality_modal') {
-                await handleAIPersonalityModal(interaction, client);
-            } else if (interaction.customId === 'ai_key_modal') {
-                await handleAIKeyModal(interaction, client);
-            } else if (interaction.customId === 'ai_favorites_modal') {
-                await handleAIFavoritesModal(interaction, client);
-            } else if (interaction.customId === 'tts_setup_modal') {
+            if (interaction.customId === 'tts_setup_modal') {
                 await handleTTSSetupModal(interaction, client);
             } else if (interaction.customId === 'lavalink_setup_modal') {
                 await handleLavalinkSetupModal(interaction, client);
@@ -272,57 +266,7 @@ async function handleSecureMusicButton(interaction, client) {
     }
 }
 
-async function handleAIPersonalityModal(interaction, client) {
-    await interaction.deferReply({ ephemeral: true });
 
-    try {
-        const Server = require('../models/Server');
-        const server = await Server.findById(interaction.guild.id) || new Server({ _id: interaction.guild.id });
-
-        const bio = interaction.fields.getTextInputValue('bio');
-        const personality = interaction.fields.getTextInputValue('personality');
-        const hierarchy = interaction.fields.getTextInputValue('hierarchy');
-        const lore = interaction.fields.getTextInputValue('lore');
-        const customPrompt = interaction.fields.getTextInputValue('custom_prompt');
-
-        server.aiPersonality = {
-            bio: bio || server.aiPersonality?.bio || '',
-            personality: personality || server.aiPersonality?.personality || '',
-            serverHierarchy: hierarchy || server.aiPersonality?.serverHierarchy || '',
-            serverLore: lore || server.aiPersonality?.serverLore || '',
-            customPrompt: customPrompt || server.aiPersonality?.customPrompt || '',
-            favorites: server.aiPersonality?.favorites || []
-        };
-
-        await server.save();
-
-        const favoritesList = server.aiPersonality?.favorites?.length > 0
-            ? server.aiPersonality.favorites.map(f => `${f.name} (${f.type})`).join('\n')
-            : 'None';
-
-        const embed = new EmbedBuilder()
-            .setTitle('🤖 AI Personality Updated')
-            .setDescription('The AI personality has been successfully updated for this server!')
-            .setColor('#00FF00')
-            .addFields(
-                { name: 'Bio', value: bio || 'Not set', inline: false },
-                { name: 'Personality', value: personality || 'Not set', inline: false },
-                { name: 'Server Hierarchy', value: hierarchy || 'Not set', inline: false },
-                { name: 'Server Lore', value: lore || 'Not set', inline: false },
-                { name: 'Custom Prompt', value: customPrompt || 'Not set', inline: false },
-                { name: 'Favorite Music', value: favoritesList, inline: false }
-            );
-
-        await interaction.editReply({ embeds: [embed] });
-
-    } catch (error) {
-        console.error('Error handling AI personality modal:', error);
-        const embed = new EmbedBuilder()
-            .setDescription('❌ An error occurred while updating AI personality!')
-            .setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-    }
-}
 
 async function handleTTSSetupModal(interaction, client) {
     await interaction.deferReply({ ephemeral: true });
@@ -458,96 +402,7 @@ async function handleTTSVoiceSelect(interaction, client) {
     }
 }
 
-async function handleAIKeyModal(interaction, client) {
-    await interaction.deferReply({ ephemeral: true });
 
-    try {
-        const Server = require('../models/Server');
-        const server = await Server.findById(interaction.guild.id) || new Server({ _id: interaction.guild.id });
-
-        const apiKey = interaction.fields.getTextInputValue('api_key');
-        const model = interaction.fields.getTextInputValue('model');
-
-        // Test the API key and model before saving
-        const testEmbed = new EmbedBuilder()
-            .setTitle('🔄 Testing AI Configuration')
-            .setDescription('Testing your API key and model configuration...')
-            .setColor('#FFFF00');
-
-        await interaction.editReply({ embeds: [testEmbed] });
-
-        try {
-            // Test the API key with a simple request
-            const axios = require('axios');
-            const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-                model: model,
-                messages: [{ role: 'user', content: 'Hello' }],
-                max_tokens: 10
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                timeout: 10000
-            });
-
-            if (response.data && response.data.choices) {
-                // Test successful, save the settings
-                server.aiSettings = {
-                    apiKey: apiKey,
-                    model: model
-                };
-
-                await server.save();
-
-                const successEmbed = new EmbedBuilder()
-                    .setTitle('✅ AI Configuration Updated')
-                    .setDescription('Your AI API key and model have been successfully tested and saved!')
-                    .setColor('#00FF00')
-                    .addFields(
-                        { name: 'Model', value: model, inline: true },
-                        { name: 'Status', value: '✅ Valid and working', inline: true }
-                    );
-
-                await interaction.editReply({ embeds: [successEmbed] });
-            } else {
-                throw new Error('Invalid API response');
-            }
-
-        } catch (testError) {
-            console.error('AI configuration test failed:', testError);
-
-            let errorMessage = '❌ Failed to validate API key and model. ';
-            if (testError.response) {
-                if (testError.response.status === 401) {
-                    errorMessage += 'Invalid API key.';
-                } else if (testError.response.status === 400) {
-                    errorMessage += 'Invalid model or request format.';
-                } else {
-                    errorMessage += `API error: ${testError.response.status}`;
-                }
-            } else if (testError.code === 'ECONNABORTED') {
-                errorMessage += 'Request timed out. Please try again.';
-            } else {
-                errorMessage += 'Please check your API key and model.';
-            }
-
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('❌ AI Configuration Failed')
-                .setDescription(errorMessage)
-                .setColor('#FF0000');
-
-            await interaction.editReply({ embeds: [errorEmbed] });
-        }
-
-    } catch (error) {
-        console.error('Error handling AI key modal:', error);
-        const embed = new EmbedBuilder()
-            .setDescription('❌ An error occurred while updating AI configuration!')
-            .setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-    }
-}
 
 async function handleAIFavoritesModal(interaction, client) {
     await interaction.deferReply({ ephemeral: true });
@@ -774,6 +629,123 @@ async function handleHelpCategorySelect(interaction, client) {
             embeds: [],
             components: []
         });
+    }
+}
+
+async function handleAIConfigModal(interaction, client) {
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+        const Server = require('../models/Server');
+        const server = await Server.findById(interaction.guild.id) || new Server({ _id: interaction.guild.id });
+
+        const apiKey = interaction.fields.getTextInputValue('api_key');
+        const model = interaction.fields.getTextInputValue('model');
+        const patronRole = interaction.fields.getTextInputValue('patron_role');
+        const queenRole = interaction.fields.getTextInputValue('queen_role');
+        const bio = interaction.fields.getTextInputValue('bio');
+        const personality = interaction.fields.getTextInputValue('personality');
+        const customPrompt = interaction.fields.getTextInputValue('custom_prompt');
+
+        // Test API key and model if provided
+        if (apiKey && model) {
+            const testEmbed = new EmbedBuilder()
+                .setTitle('🔄 Testing AI Configuration')
+                .setDescription('Testing your Google API key and model configuration...')
+                .setColor('#FFFF00');
+
+            await interaction.editReply({ embeds: [testEmbed] });
+
+            try {
+                const { GoogleGenerativeAI } = require('@google/generative-ai');
+                const genAI = new GoogleGenerativeAI(apiKey);
+
+                const validModels = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite'];
+                if (!validModels.includes(model)) {
+                    throw new Error(`Invalid model. Supported models: ${validModels.join(', ')}`);
+                }
+
+                const testModel = genAI.getGenerativeModel({ model: model });
+                const result = await testModel.generateContent('Hello, this is a test message.');
+                const response = await result.response;
+                const text = response.text();
+
+                if (!text || text.length === 0) {
+                    throw new Error('Empty response from AI model');
+                }
+
+            } catch (testError) {
+                console.error('AI configuration test failed:', testError);
+
+                let errorMessage = '❌ Failed to validate Google API key and model. ';
+                if (testError.message.includes('API_KEY_INVALID')) {
+                    errorMessage += 'Invalid API key.';
+                } else if (testError.message.includes('MODEL_INVALID')) {
+                    errorMessage += 'Invalid model selected.';
+                } else if (testError.message.includes('Invalid model')) {
+                    errorMessage += testError.message;
+                } else if (testError.status === 403) {
+                    errorMessage += 'API key does not have permission to use this model.';
+                } else if (testError.status === 429) {
+                    errorMessage += 'Rate limit exceeded. Please try again later.';
+                } else {
+                    errorMessage += 'Please check your API key and model selection.';
+                }
+
+                const errorEmbed = new EmbedBuilder()
+                    .setTitle('❌ AI Configuration Failed')
+                    .setDescription(errorMessage)
+                    .setColor('#FF0000');
+
+                return await interaction.editReply({ embeds: [errorEmbed] });
+            }
+        }
+
+        // Save all settings
+        if (apiKey && model) {
+            server.aiSettings = {
+                apiKey: apiKey,
+                model: model
+            };
+        }
+
+        if (patronRole) {
+            server.patron_role_id = patronRole;
+        }
+
+        if (queenRole) {
+            server.queen_role_id = queenRole;
+        }
+
+        server.aiPersonality = {
+            bio: bio || server.aiPersonality?.bio || '',
+            personality: personality || server.aiPersonality?.personality || '',
+            serverHierarchy: server.aiPersonality?.serverHierarchy || '',
+            serverLore: server.aiPersonality?.serverLore || '',
+            customPrompt: customPrompt || server.aiPersonality?.customPrompt || '',
+            favorites: server.aiPersonality?.favorites || []
+        };
+
+        await server.save();
+
+        const successEmbed = new EmbedBuilder()
+            .setTitle('✅ AI Configuration Updated')
+            .setDescription('Your AI configuration has been successfully updated!')
+            .setColor('#00FF00')
+            .addFields(
+                { name: '🔑 API Settings', value: apiKey ? `✅ Model: ${model}` : '❌ Not updated', inline: false },
+                { name: '👑 Role Settings', value: (patronRole || queenRole) ? `${patronRole ? `Patron: <@&${patronRole}>\n` : ''}${queenRole ? `Queen: <@&${queenRole}>` : ''}`.trim() : '❌ Not updated', inline: false },
+                { name: '🎭 Personality', value: (bio || personality || customPrompt) ? `${bio ? `Bio: ${bio}\n` : ''}${personality ? `Personality: ${personality}\n` : ''}${customPrompt ? `Custom Prompt: ${customPrompt}` : ''}`.trim() : '❌ Not updated', inline: false }
+            );
+
+        await interaction.editReply({ embeds: [successEmbed] });
+
+    } catch (error) {
+        console.error('Error handling AI config modal:', error);
+        const embed = new EmbedBuilder()
+            .setDescription('❌ An error occurred while updating AI configuration!')
+            .setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
     }
 }
 

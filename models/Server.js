@@ -49,6 +49,9 @@ const serverSchema = new mongoose.Schema({
         model: String
     },
 
+    patron_role_id: String,
+    queen_role_id: String,
+
     levelCard: {
         backgroundColor: String,
         accentColor: String,
